@@ -1,11 +1,11 @@
 import { Router } from 'express'
 import multer from 'multer';
-import uploadConfig from '../config/upload';
+import uploadConfig from '@config/upload';
 
-import CreateUserService from "../services/CreateUserService";
+import CreateUserService from '@modules/users/services/CreateUserService';
+import UpdateUserAvatarSevice from '@modules/users/services/CreateUserService';
 
 import ensureAuthenticate from '../middlewares/ensureAuthenticated';
-import UpdateUserAvatarSevice from '../services/UpdateUserAvatarService';
 
 const usersRouter = Router();
 const upload = multer(uploadConfig);
@@ -17,7 +17,7 @@ usersRouter.post('/', async (request, response)=> {
 
     const createUser = new CreateUserService();
 
-    const user = await createUser.excute({
+    const user = await createUser.execute({
       name,
       email,
       password,
@@ -30,7 +30,11 @@ usersRouter.post('/', async (request, response)=> {
 });
 
 // rota de alteracao do avatar(foto) do usuario
-usersRouter.patch('/avatar',ensureAuthenticate, upload.single('avatar'), async( request, response) => {
+usersRouter.patch(
+  '/avatar',
+  ensureAuthenticate,
+  upload.single('avatar'),
+  async( request, response) => {
 
     const updateUserAvatar = new UpdateUserAvatarSevice();
 

@@ -2,9 +2,9 @@ import { compare } from "bcryptjs";
 import { getRepository } from "typeorm";
 import { sign } from 'jsonwebtoken';
 
-import AppError from '../errors/AppError';
-import auth from '../config/auth';
-import User from "../models/User";
+import auth from '@config/auth';
+import AppError from '@shared/errors/AppError';
+import User from "../infra/typeorm/entities/User";
 
 interface IAuthenticateUserService{ // Aqui o usuario faz a requisicao de email e senha.
   email: string;
