@@ -6,13 +6,13 @@
   "password": "postgres",
   "database":"postgres",
   "migrations": [
-      "./src/database/migrations/**.ts"
+    ["./src/shared/infra/typeorm/migrations/*.ts"]
   ],
   "entities": [
-      "./src/models/**.ts"
+      ["./src/modules/**/infra/typeorm/entities/*.ts"]
   ],
   "logging": true,
   "cli": {
-      "migrationsDir": "./src/database/migrations"
+      "migrationsDir": "./src/shared/infra/typeorm/migrations"
   }
 }

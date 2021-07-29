@@ -1,47 +1,44 @@
-import { getRepository } from "typeorm";
-import path from 'path';
-import fs from 'fs';
+import { injectable, inject } from 'tsyringe';
 
 import AppError from '@shared/errors/AppError';
+import User from '@modules/users/infra/typeorm/entities/User';
 
-import uploadConfig from '@config/upload';
-import User from "../infra/typeorm/entities/User";
+import IStorageProvider from '@shared/container/providers/StorageProviders/models/IStorageProvider';import IUsersRepository from '../repositories/IUsersRepository';
 
-
-interface IUpdateUserAvatarService {
+interface IRequest {
   user_id: string;
   avatarFilename: string;
 }
 
-class UpdateUserAvatarSevice {
-  public async execute({ user_id, avatarFilename }: IUpdateUserAvatarService): Promise<User>{
-    const usersRepository = getRepository(User);
+@injectable()
+class UpdateUserAvatarService {
+  constructor(
+    @inject('UsersRepository')
+    private usersRepository: IUsersRepository,
 
-    const user = await usersRepository.findOne(user_id);
+    @inject('StorageProvider')
+    private storageProvider: IStorageProvider,
+  ) {}
 
-    if(!user) {
+  public async execute({ user_id, avatarFilename }: IRequest): Promise<User> {
+    const user = await this.usersRepository.findById(user_id);
+
+    if (!user) {
       throw new AppError('Only authenticated users can change avatar.', 401);
     }
 
-    if(user.avatar) {
-      // Deletar avatar anterior
-
-      // procurar o caminho da foto
-      const userAvatarFilePath = path.join(uploadConfig.directory, user.avatar);
-      // verifica se essa foto existe
-      const userAvatarFileExists = await fs.promises.stat(userAvatarFilePath);
-      //se existir, deleta.
-      if(userAvatarFileExists) {
-        await fs.promises.unlink(userAvatarFilePath);
-      }
+    if (user.avatar) {
+      await this.storageProvider.deleteFile(user.avatar);
     }
 
-    user.avatar = avatarFilename;
-// metodo save do getRepository do typeorm(salva se o usuario nao exister ou salva a alteracao se ja existir )
-    await usersRepository.save(user);
+    const filename = await this.storageProvider.saveFile(avatarFilename);
+
+    user.avatar = filename;
+
+    await this.usersRepository.save(user);
 
     return user;
   }
 }
 
-export default UpdateUserAvatarSevice;
+export default UpdateUserAvatarService;

@@ -1,41 +1,50 @@
-import { getRepository } from "typeorm";
-import { hash } from 'bcryptjs';
+import { injectable, inject } from 'tsyringe';
 
 import AppError from '@shared/errors/AppError';
 
-import User from "../infra/typeorm/entities/User";
+import User from '@modules/users/infra/typeorm/entities/User';
+import ICacheProvider from '@shared/container/providers/CacheProvider/models/ICacheProvider';
+import IUsersRepository from '../repositories/IUsersRepository';
+import IHashProvider from '../providers/HashProvider/models/IHashProvider';
 
-interface ICreateUserService {
-  name: string,
-  email: string,
-  password: string,
+interface IRequest {
+  name: string;
+  email: string;
+  password: string;
 }
 
+@injectable()
 class CreateUserService {
+  constructor(
+    @inject('UsersRepository')
+    private usersRepository: IUsersRepository,
 
-  public async execute({ name, email, password }: ICreateUserService): Promise<User> {
-    const userRepository = getRepository(User);
+    @inject('HashProvider')
+    private hashProvider: IHashProvider,
 
-    const checkUserExists = await userRepository.findOne({
-      where: { email },
-    });
+    @inject('CacheProvider')
+    private cacheProvider: ICacheProvider,
+  ) {}
+
+  public async execute({ name, email, password }: IRequest): Promise<User> {
+    const checkUserExists = await this.usersRepository.findByEmail(email);
 
     if (checkUserExists) {
-      throw new AppError('Email address already used!');
+      throw new AppError('E-mail already exists');
     }
 
-    const hashedPassword = await hash(password, 6);
+    const passwordHash = await this.hashProvider.generateHash(password);
 
-    const user = userRepository.create({
+    const user = await this.usersRepository.create({
       name,
       email,
-      password: hashedPassword,
+      password: passwordHash,
     });
-    await userRepository.save(user);
+
+    await this.cacheProvider.invalidatePrefix('providers-list');
 
     return user;
   }
-
 }
 
 export default CreateUserService;

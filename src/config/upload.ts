@@ -7,7 +7,8 @@ const tmpFolder = path.resolve(__dirname, '..', '..', 'tmp');
 
 //  Os arquivos (foto) upadas para aplicacao irao para pasta 'tmp' representada no caminho (destination)
 export default {
-  directory: tmpFolder,
+  tmpFolder,
+  uploadsFolder: path.resolve(tmpFolder, 'uploads'),
 
   storage: multer.diskStorage({
     destination: tmpFolder,

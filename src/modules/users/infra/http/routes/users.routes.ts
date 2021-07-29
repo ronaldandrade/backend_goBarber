@@ -1,52 +1,24 @@
-import { Router } from 'express'
+import { Router } from 'express';
+
 import multer from 'multer';
 import uploadConfig from '@config/upload';
 
-import CreateUserService from '@modules/users/services/CreateUserService';
-import UpdateUserAvatarSevice from '@modules/users/services/CreateUserService';
-
-import ensureAuthenticate from '../middlewares/ensureAuthenticated';
+import UsersController from '../controllers/UsersController';
+import UserAvatarController from '../controllers/UserAvatarController';
+import ensureAuthenticated from '../middlewares/ensureAuthenticated';
 
 const usersRouter = Router();
+const usersController = new UsersController();
+const userAvatarController = new UserAvatarController();
 const upload = multer(uploadConfig);
 
-// Rotar de login do usuario
-usersRouter.post('/', async (request, response)=> {
+usersRouter.post('/', usersController.create);
 
-    const { name, email, password } = request.body;
-
-    const createUser = new CreateUserService();
-
-    const user = await createUser.execute({
-      name,
-      email,
-      password,
-    });
-
-    delete user.password;
-
-    return response.json(user);
-
-});
-
-// rota de alteracao do avatar(foto) do usuario
 usersRouter.patch(
   '/avatar',
-  ensureAuthenticate,
+  ensureAuthenticated,
   upload.single('avatar'),
-  async( request, response) => {
-
-    const updateUserAvatar = new UpdateUserAvatarSevice();
-
-    const user = await updateUserAvatar.execute({
-      user_id: request.user.id,
-      avatarFilename: request.file.filename,
-    });
-
-    delete user.password;
-
-    return response.json(user);
-
-})
+  userAvatarController.update,
+);
 
 export default usersRouter;
